@@ -1,4 +1,3 @@
-
 <script lang="ts">
 	import { onMount } from 'svelte';
 
@@ -66,8 +65,7 @@
 			await loadCompanies();
 			successMessage = 'Company wurde erfolgreich erstellt!';
 		} catch (err) {
-			createError =
-				err instanceof Error ? err.message : 'Unbekannter Fehler';
+			createError = err instanceof Error ? err.message : 'Unbekannter Fehler';
 		} finally {
 			creating = false;
 		}
@@ -83,7 +81,7 @@
 </svelte:head>
 
 <main>
-	<a href="/">← Zurück zu den Jobs</a>
+	<a href="/jobs">← Zurück zu den Jobs</a>
 
 	<h1>Unsere Companies</h1>
 
