@@ -1,4 +1,3 @@
-
 <script lang="ts">
 	import { onMount } from 'svelte';
 
@@ -23,7 +22,7 @@
 		error = '';
 
 		try {
-			const response = await fetch('http://localhost:8080/api/company');
+			const response = await fetch('/api/company');
 
 			if (!response.ok) {
 				throw new Error(`HTTP-Fehler: ${response.status}`);
@@ -45,7 +44,7 @@
 		successMessage = '';
 
 		try {
-			const response = await fetch('http://localhost:8080/api/company', {
+			const response = await fetch('/api/company', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'
@@ -66,8 +65,7 @@
 			await loadCompanies();
 			successMessage = 'Company wurde erfolgreich erstellt!';
 		} catch (err) {
-			createError =
-				err instanceof Error ? err.message : 'Unbekannter Fehler';
+			createError = err instanceof Error ? err.message : 'Unbekannter Fehler';
 		} finally {
 			creating = false;
 		}
@@ -83,7 +81,7 @@
 </svelte:head>
 
 <main>
-	<a href="/">← Zurück zu den Jobs</a>
+	<a href="/jobs">← Zurück zu den Jobs</a>
 
 	<h1>Unsere Companies</h1>
 

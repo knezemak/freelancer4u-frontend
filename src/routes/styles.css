@@ -1,0 +1,119 @@
+body {
+	margin: 0;
+	font-family: Arial, sans-serif;
+	color: #17233a;
+	background: #fff;
+}
+nav {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 1.3rem;
+	padding: 1rem 5%;
+	background: #f3f5f8;
+}
+a {
+	color: #245bc4;
+}
+.brand {
+	font-weight: bold;
+	font-size: 1.2rem;
+	text-decoration: none;
+}
+.account {
+	margin-left: auto;
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: 0.7rem;
+}
+.content {
+	max-width: 1000px;
+	margin: 3rem auto;
+	padding: 0 1.2rem;
+}
+.welcome,
+.auth {
+	max-width: 480px;
+	margin: 3rem auto;
+	padding: 2rem;
+	border: 1px solid #dbe1ec;
+	border-radius: 10px;
+}
+.welcome {
+	text-align: center;
+}
+button,
+.button {
+	display: inline-block;
+	background: #245bc4;
+	color: white;
+	padding: 0.65rem 1rem;
+	border: 1px solid #245bc4;
+	border-radius: 6px;
+	text-decoration: none;
+	cursor: pointer;
+	font: inherit;
+}
+.secondary {
+	background: white;
+	color: #245bc4;
+}
+.auth form {
+	display: grid;
+	gap: 0.8rem;
+}
+.auth input {
+	font: inherit;
+	padding: 0.7rem;
+	border: 1px solid #8996ad;
+	border-radius: 5px;
+}
+.error {
+	color: #a92121;
+}
+/* Layout for supplied Moodle forms without loading Bootstrap remotely. */
+.container.mt-5 {
+	max-width: 520px;
+	margin: 3rem auto;
+}
+.card {
+	border: 1px solid #dbe1ec;
+	border-radius: 10px;
+	overflow: hidden;
+}
+.card-header {
+	padding: 1rem 1.5rem;
+	background: #f3f5f8;
+	font-size: 1.3rem;
+	font-weight: bold;
+}
+.card-body {
+	padding: 1.5rem;
+}
+.mb-3 {
+	display: grid;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+.form-control {
+	width: 100%;
+	box-sizing: border-box;
+	font: inherit;
+	padding: 0.7rem;
+	border: 1px solid #8996ad;
+	border-radius: 5px;
+}
+.invalid-feedback {
+	display: none;
+}
+.alert-danger {
+	color: #a92121;
+	margin-bottom: 1rem;
+}
+.row.align-items-end {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}

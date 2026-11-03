@@ -1,4 +1,3 @@
-
 <script lang="ts">
 	import { onMount } from 'svelte';
 	import { page } from '$app/state';
@@ -22,9 +21,7 @@
 		try {
 			const jobId = page.params.id;
 
-			const response = await fetch(
-				`http://localhost:8080/api/job/${jobId}`
-			);
+			const response = await fetch(`/api/job/${jobId}`);
 
 			if (!response.ok) {
 				throw new Error(`HTTP-Fehler: ${response.status}`);
@@ -44,7 +41,7 @@
 </svelte:head>
 
 <main>
-	<a href="/">← Zurück zu den Jobs</a>
+	<a href="/jobs">← Zurück zu den Jobs</a>
 
 	{#if loading}
 		<p>Job wird geladen...</p>
