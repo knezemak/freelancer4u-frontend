@@ -1,4 +1,5 @@
-import { AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } from '$app/env/private';
+import { AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE, API_BASE_URL } from '$app/env/private';
+import { verifiedRoles } from './verified-roles.js';
 
 const COOKIE = 'auth0_access_token';
 
@@ -62,7 +63,8 @@ export async function getUser(token) {
 		given_name: profileString(user.given_name),
 		family_name: profileString(user.family_name),
 		email: profileString(user.email),
-		picture: profilePicture(user.picture)
+		picture: profilePicture(user.picture),
+		...(await verifiedRoles(token, user.sub, API_BASE_URL))
 	};
 }
 

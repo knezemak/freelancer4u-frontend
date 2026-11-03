@@ -5,10 +5,15 @@ import { test } from 'node:test';
 // Inject only configuration and the network boundary; exercise the real service.
 const source = (
 	await readFile(new URL('../src/lib/server/auth.service.js', import.meta.url), 'utf8')
-).replace(
-	"import { AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } from '$app/env/private';",
-	"const AUTH0_DOMAIN = 'tenant.invalid', AUTH0_CLIENT_ID = 'test-only', AUTH0_AUDIENCE = 'test-api';"
-);
+)
+	.replace(
+		"import { AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE, API_BASE_URL } from '$app/env/private';",
+		"const AUTH0_DOMAIN = 'tenant.invalid', AUTH0_CLIENT_ID = 'test-only', AUTH0_AUDIENCE = 'test-api', API_BASE_URL = 'https://api.example';"
+	)
+	.replace(
+		"import { verifiedRoles } from './verified-roles.js';",
+		'const verifiedRoles = async () => ({ user_roles: [], rolesAvailable: true });'
+	);
 const auth = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 function jar(token) {
 	return {
@@ -67,7 +72,9 @@ test('Auth0 lifecycle and failure boundaries', async (t) => {
 			given_name: 'Ada',
 			family_name: 'Lovelace',
 			email: 'ada@example.invalid',
-			picture: 'https://images.example/ada.png'
+			picture: 'https://images.example/ada.png',
+			user_roles: [],
+			rolesAvailable: true
 		});
 	});
 	await t.test('missing optional fields and unsafe profile image are harmless', async () => {

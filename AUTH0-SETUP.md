@@ -79,7 +79,7 @@ visitors see "Not logged in"; optional missing profile fields display a dash. Th
 server exposes only these display fields, with HTTPS-only profile pictures. It
 does not expose the raw provider response or tokens. No additional Auth0 setting
 is required; an account created without first/last name may not have those fields.
-No role-based restrictions or merges are included. Issues remain open.
+Exercise 5 adds role-based restrictions; see ROLES-SETUP.md. No merges are included. Issues remain open pending live role verification.
 
 ## Verification
 

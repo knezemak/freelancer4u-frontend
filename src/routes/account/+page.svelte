@@ -23,7 +23,16 @@
 		<dd>{data.user.family_name || '—'}</dd>
 		<dt>Email:</dt>
 		<dd>{data.user.email || '—'}</dd>
+		{#if data.user.user_roles.length > 0}
+			<dt>Roles:</dt>
+			<dd>{data.user.user_roles.join(', ')}</dd>
+		{/if}
 	</dl>
+	{#if !data.user.rolesAvailable}
+		<p role="status">
+			Roles could not be verified. Check that the backend is running on the roles branch.
+		</p>
+	{/if}
 {:else}
 	<p>Not logged in</p>
 {/if}

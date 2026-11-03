@@ -1,5 +1,10 @@
 <script lang="ts">
 	import { onMount } from 'svelte';
+	import { SvelteURLSearchParams } from 'svelte/reactivity';
+	import { resolve } from '$app/paths';
+	import type { PageProps } from './$types';
+	let { data }: PageProps = $props();
+	let isAdmin = $derived(data.user?.user_roles.includes('admin') ?? false);
 
 	type Job = {
 		id?: string;
@@ -33,7 +38,7 @@
 		error = '';
 
 		try {
-			const params = new URLSearchParams();
+			const params = new SvelteURLSearchParams();
 
 			if (minEarnings !== '') {
 				params.set('min', minEarnings);
@@ -120,64 +125,67 @@
 
 <main>
 	<nav aria-label="Hauptnavigation">
-		<a href="/jobs" aria-current="page">Jobs</a>
-		<a href="/companies">Companies anzeigen →</a>
+		<a href={resolve('/jobs')} aria-current="page">Jobs</a>
+		{#if isAdmin}<a href={resolve('/companies')}>Companies anzeigen →</a>{/if}
 	</nav>
 
 	<h1>Freelancer4U</h1>
 	<p>Entdecke unsere Freelancer-Jobs.</p>
 
-	<h2>Neuen Job erstellen</h2>
+	{#if isAdmin}
+		<h2>Neuen Job erstellen</h2>
+		{#if data.companiesError}<p class="error" role="alert">{data.companiesError}</p>{/if}
 
-	<form class="create-form" onsubmit={createJob}>
-		<label>
-			Titel
-			<input type="text" bind:value={newTitle} placeholder="z. B. Website testen" required />
-		</label>
+		<form class="create-form" onsubmit={createJob}>
+			<label>
+				Titel
+				<input type="text" bind:value={newTitle} placeholder="z. B. Website testen" required />
+			</label>
 
-		<label>
-			Beschreibung
-			<textarea bind:value={newDescription} placeholder="Beschreibe den Job" rows="3" required
-			></textarea>
-		</label>
+			<label>
+				Beschreibung
+				<textarea bind:value={newDescription} placeholder="Beschreibe den Job" rows="3" required
+				></textarea>
+			</label>
 
-		<label>
-			Job-Typ
-			<select bind:value={newJobType}>
-				<option value="TEST">TEST</option>
-				<option value="IMPLEMENT">IMPLEMENT</option>
-				<option value="REVIEW">REVIEW</option>
-				<option value="OTHER">OTHER</option>
-			</select>
-		</label>
+			<label>
+				Job-Typ
+				<select bind:value={newJobType}>
+					<option value="TEST">TEST</option>
+					<option value="IMPLEMENT">IMPLEMENT</option>
+					<option value="REVIEW">REVIEW</option>
+					<option value="OTHER">OTHER</option>
+				</select>
+			</label>
 
-		<label>
-			Verdienst (CHF)
-			<input type="number" min="0" bind:value={newEarnings} required />
-		</label>
+			<label>
+				Verdienst (CHF)
+				<input type="number" min="0" bind:value={newEarnings} required />
+			</label>
 
-		<label>
-			Company-ID
-			<input
-				type="text"
-				bind:value={newCompanyId}
-				placeholder="MongoDB-ID einer Company"
-				required
-			/>
-		</label>
+			<label>
+				Company
+				<select bind:value={newCompanyId} required>
+					<option value="" disabled>Company auswählen</option>
+					{#each data.companies as company (company.id)}
+						<option value={company.id}>{company.name}</option>
+					{/each}
+				</select>
+			</label>
 
-		<button type="submit" disabled={creating}>
-			{creating ? 'Job wird erstellt...' : 'Job erstellen'}
-		</button>
+			<button type="submit" disabled={creating}>
+				{creating ? 'Job wird erstellt...' : 'Job erstellen'}
+			</button>
 
-		{#if createError}
-			<p class="error">Fehler beim Erstellen: {createError}</p>
-		{/if}
+			{#if createError}
+				<p class="error">Fehler beim Erstellen: {createError}</p>
+			{/if}
 
-		{#if createSuccess}
-			<p class="success">{createSuccess}</p>
-		{/if}
-	</form>
+			{#if createSuccess}
+				<p class="success">{createSuccess}</p>
+			{/if}
+		</form>
+	{/if}
 
 	<h2>Jobs filtern</h2>
 
@@ -223,7 +231,9 @@
 					<p><strong>Verdienst:</strong> CHF {job.earnings}</p>
 
 					{#if job.id}
-						<a class="details-link" href={`/jobs/${job.id}`}> Details anzeigen → </a>
+						<a class="details-link" href={resolve('/jobs/[id]', { id: job.id })}>
+							Details anzeigen →
+						</a>
 					{/if}
 				</article>
 			{/each}

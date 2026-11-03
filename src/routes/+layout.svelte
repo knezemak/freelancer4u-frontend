@@ -10,7 +10,10 @@
 <nav aria-label="Main navigation">
 	<a class="brand" href={resolve('/')}>Freelancer4U</a>
 	{#if data.isAuthenticated}
-		<a href={resolve('/companies')}>Companies</a><a href={resolve('/jobs')}>Jobs</a>
+		{#if data.user?.user_roles.includes('admin')}
+			<a href={resolve('/companies')}>Companies</a>
+		{/if}
+		<a href={resolve('/jobs')}>Jobs</a>
 		<a href={resolve('/account')}>Account</a>
 		<div class="account">
 			<span>{data.user?.name}</span>

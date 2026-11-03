@@ -1,4 +1,4 @@
-import { redirect } from '@sveltejs/kit';
+import { error, redirect } from '@sveltejs/kit';
 import { readSession } from '#lib/server/auth.service.js';
 
 // Adapted Moodle hook: expose the same locals, verifying the session with Auth0
@@ -10,6 +10,12 @@ export async function handle({ event, resolve }) {
 	event.locals.isAuthenticated = Boolean(session.user);
 	if (/^\/(companies|jobs)(\/|$)/.test(event.url.pathname) && !session.user) {
 		redirect(303, '/login');
+	}
+	if (
+		/^\/companies(\/|$)/.test(event.url.pathname) &&
+		!session.user?.user_roles.includes('admin')
+	) {
+		error(403, 'Admin role required');
 	}
 	const response = await resolve(event);
 	// Authenticated HTML and form responses must not be shared between users.

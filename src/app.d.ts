@@ -8,6 +8,8 @@ declare global {
 			family_name?: string;
 			email?: string;
 			picture?: string;
+			user_roles: string[];
+			rolesAvailable: boolean;
 		}
 		interface Locals {
 			user: User | null;
