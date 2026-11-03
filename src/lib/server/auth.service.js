@@ -84,8 +84,11 @@ export async function login(email, password, cookies, secure) {
 	});
 }
 
-/** @param {string} email @param {string} password @param {import('@sveltejs/kit').Cookies} cookies @param {boolean} secure */
-export async function signup(email, password, cookies, secure) {
+/** Moodle signup fields, with server validation and without credential logging.
+ * @param {string} email @param {string} password @param {import('@sveltejs/kit').Cookies} cookies @param {boolean} secure
+ * @param {string} [firstName] @param {string} [lastName]
+ */
+export async function signup(email, password, cookies, secure, firstName = '', lastName = '') {
 	const { clientId } = configuration();
 	await authRequest('/dbconnections/signup', {
 		method: 'POST',
@@ -94,7 +97,9 @@ export async function signup(email, password, cookies, secure) {
 			client_id: clientId,
 			email,
 			password,
-			connection: 'Username-Password-Authentication'
+			connection: 'Username-Password-Authentication',
+			...(firstName ? { given_name: firstName } : {}),
+			...(lastName ? { family_name: lastName } : {})
 		})
 	});
 	try {
@@ -109,7 +114,23 @@ export async function signup(email, password, cookies, secure) {
 /** @param {import('@sveltejs/kit').Cookies} cookies */
 export function logout(cookies) {
 	cookies.delete(COOKIE, { path: '/' });
+	// Also remove cookies left by the unmodified Moodle example.
+	cookies.delete('jwt_token', { path: '/' });
+	cookies.delete('user_info', { path: '/' });
 }
+
+/** @param {string} origin */
+export function getLogoutUrl(origin) {
+	const { base, clientId } = configuration();
+	const target = new URL('/v2/logout', base);
+	target.searchParams.set('client_id', clientId);
+	target.searchParams.set('returnTo', `${origin}/`);
+	return target;
+}
+
+// Keep the Moodle service interface for the supplied page actions.
+const auth = { login, signup };
+export default auth;
 
 /** @param {import('@sveltejs/kit').Cookies} cookies */
 export async function readSession(cookies) {

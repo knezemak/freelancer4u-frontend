@@ -1,3 +1,6 @@
-export function load({ locals }) {
-	return { user: locals.user, isAuthenticated: locals.isAuthenticated };
-}
+export const load = async ({ locals }) => {
+	return {
+		user: locals.user || null,
+		isAuthenticated: locals.isAuthenticated || false
+	};
+};

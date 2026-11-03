@@ -1,2 +1,3 @@
 import { authAction } from '#lib/server/auth-action.js';
-export const actions = { default: authAction(true) };
+// Named action used by the Moodle signup form (action="?/signup").
+export const actions = { signup: authAction(true) };
