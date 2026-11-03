@@ -72,3 +72,48 @@ button,
 .error {
 	color: #a92121;
 }
+/* Layout for supplied Moodle forms without loading Bootstrap remotely. */
+.container.mt-5 {
+	max-width: 520px;
+	margin: 3rem auto;
+}
+.card {
+	border: 1px solid #dbe1ec;
+	border-radius: 10px;
+	overflow: hidden;
+}
+.card-header {
+	padding: 1rem 1.5rem;
+	background: #f3f5f8;
+	font-size: 1.3rem;
+	font-weight: bold;
+}
+.card-body {
+	padding: 1.5rem;
+}
+.mb-3 {
+	display: grid;
+	gap: 0.5rem;
+	margin-bottom: 1rem;
+}
+.form-control {
+	width: 100%;
+	box-sizing: border-box;
+	font: inherit;
+	padding: 0.7rem;
+	border: 1px solid #8996ad;
+	border-radius: 5px;
+}
+.invalid-feedback {
+	display: none;
+}
+.alert-danger {
+	color: #a92121;
+	margin-bottom: 1rem;
+}
+.row.align-items-end {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: 1rem;
+}

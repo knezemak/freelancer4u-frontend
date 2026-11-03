@@ -27,6 +27,14 @@ function jar(token) {
 	};
 }
 
+test('Auth0 logout uses the configured host and safely encoded return origin', () => {
+	const target = auth.getLogoutUrl('https://frontend.example');
+	assert.equal(target.origin, 'https://tenant.invalid');
+	assert.equal(target.pathname, '/v2/logout');
+	assert.equal(target.searchParams.get('client_id'), 'test-only');
+	assert.equal(target.searchParams.get('returnTo'), 'https://frontend.example/');
+});
+
 test('Auth0 lifecycle and failure boundaries', async (t) => {
 	const original = globalThis.fetch;
 	t.after(() => {
@@ -51,7 +59,9 @@ test('Auth0 lifecycle and failure boundaries', async (t) => {
 			);
 		};
 		const cookies = jar();
-		await auth.signup('test@example.invalid', 'test-password', cookies, true);
+		await auth.signup('test@example.invalid', 'test-password', cookies, true, 'Ada', 'Lovelace');
+		assert.equal(JSON.parse(calls[0].options.body).given_name, 'Ada');
+		assert.equal(JSON.parse(calls[0].options.body).family_name, 'Lovelace');
 		assert.deepEqual(
 			calls.map((c) => new URL(c.url).pathname),
 			['/dbconnections/signup', '/oauth/token', '/userinfo']

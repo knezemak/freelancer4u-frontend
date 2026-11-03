@@ -27,19 +27,30 @@ message until they are supplied. Restart the server after editing .env.
 - Review the application's localhost Application URIs and cross-origin settings
   against exercise 1 for `http://localhost:5173`. This implementation sends login
   and signup requests from the SvelteKit server, without a browser callback.
+- Add `http://localhost:5173/` to Allowed Logout URLs. Logout now uses the supplied
+  Moodle flow through Auth0 `/v2/logout`. Add the exact HTTPS origin for deployments.
 - Test signup using a separate test account, automatic login, existing-user login,
   logout, invalid passwords and expired sessions once real values are available.
 
-## Replacements and scope
+## Moodle integration and scope
 
-Moodle examples were not available among the attached files or in either populated
-repository. The hook, auth service, layout loader and form routes are replacements.
-They use Auth0's signup, password-token and userinfo endpoints. Tokens stay in an
+The eight frontend Moodle files supplied later are now integrated with adaptations:
+the login and signup markup and layout loader come from the originals; server actions,
+hook and service follow their flow using the existing validated service infrastructure.
+Signup uses the Moodle named action `?/signup`, forwards optional first/last names,
+and logs in automatically. Logout clears cookies and redirects through Auth0.
+The forms use local CSS for their Bootstrap-style classes, typed props, browser and
+server validation, and corrected login links. Native fetch replaces axios to avoid
+an unnecessary dependency. No role-related two-second delay is included in this scope.
+
+Security deviations from the original examples: no token or raw error logging, no
+Management API audience, no unvalidated ID-token/user-info cookies and no wildcard
+CORS response to arbitrary OPTIONS requests. Instead, tokens stay in an
 HttpOnly, SameSite=Lax cookie, secure on HTTPS, and are never returned in page data
 or logged. Userinfo validates sessions; cookie contents are not trusted as identity.
 Use HTTPS outside local development. SvelteKit's form origin checks remain enabled.
-Logout clears this application's cookie; it does not revoke an already issued token
-or terminate other applications' Auth0 sessions.
+Logout clears this application's cookies and ends the Auth0 browser session; it does
+not revoke already issued tokens. If Auth0 is unconfigured, local logout still works.
 
 The PDF's three environment declarations are retained; optional empty Auth0 values
 allow the app to build before tenant setup. The original job list moved from `/`
@@ -57,7 +68,7 @@ No roles, admin pages or merges are included. Issues remain open.
 - `npm.cmd run check`: no errors or warnings.
 - `npm.cmd run build`: passed locally (adapter-auto still needs a deployment target
   for production).
-- `node --test tests/auth.test.mjs`: six service scenarios plus the parent test pass,
+- `node --test tests/auth.test.mjs`: seven scenarios plus the parent test pass,
   using simulated Auth0 responses; these do not prove live tenant configuration.
 - Live signup/login and company/job backend integration have not been verified.
 
