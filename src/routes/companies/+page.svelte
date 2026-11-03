@@ -22,7 +22,7 @@
 		error = '';
 
 		try {
-			const response = await fetch('http://localhost:8080/api/company');
+			const response = await fetch('/api/company');
 
 			if (!response.ok) {
 				throw new Error(`HTTP-Fehler: ${response.status}`);
@@ -44,7 +44,7 @@
 		successMessage = '';
 
 		try {
-			const response = await fetch('http://localhost:8080/api/company', {
+			const response = await fetch('/api/company', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'

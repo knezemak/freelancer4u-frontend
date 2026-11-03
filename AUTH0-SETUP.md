@@ -1,6 +1,7 @@
-# Exercise 6: frontend login through 3g
+# Exercise 6: frontend login and secured backend requests
 
-This branch implements only exercise 2 and frontend exercise 3a-g. The backend lives
+This branch includes exercise 2, frontend exercise 3a-g, and the bearer forwarding
+from the following backend-login section (h-i). The backend lives
 in `knezemak/freelancer4u`; `knezemak/freelancer4u-backend` is empty.
 
 ## Start locally
@@ -16,6 +17,13 @@ Use the real Auth0 tenant hostname (without https:// or trailing slash) and the
 Client ID of your Single Page Application. No Client Secret is needed or committed.
 The landing page works without Auth0 values; authentication returns a configuration
 message until they are supplied. Restart the server after editing .env.
+
+For the secured Java backend, also add `AUTH0_AUDIENCE` to `.env`: the Identifier of
+your own Auth0 API under Applications > APIs. Use the same value in the backend.
+This is not the SPA Client ID or the Auth0 Management API. The API must issue RS256
+signed access tokens; encrypted JWE tokens cannot be verified with public JWKS alone.
+After adding it, restart both servers and log out/in to obtain a fresh API token.
+Without the audience, signup is stopped before creating an account.
 
 ## External Auth0 settings still required
 
@@ -57,10 +65,14 @@ allow the app to build before tenant setup. The original job list moved from `/`
 to `/jobs`; existing company and job functionality remains. Both route families
 redirect anonymous visitors to `/login`.
 
-The access token can be opaque when no custom API audience is configured. The
-`locals.jwt_token` compatibility name does not imply that it is already a JWT for
-the Java API. Backend security, API audience and bearer forwarding belong to the
-later exercises and are deliberately not implemented. The Java API is still public.
+The Java backend on `feature/exercise-6-backend-login` now validates bearer access
+tokens including signature, issuer, expiry and audience. Browser requests for
+companies, jobs, filters, creation and details use same-origin `/api/...`; the
+SvelteKit server adds the access token from `locals.jwt_token`. Tokens are never
+sent as page data or exposed to JavaScript. The proxy only allows the existing API
+resources/methods, preserves Java response status, rejects cross-origin writes,
+filters cookies and rejects upstream redirects. `API_BASE_URL` is server-only.
+The assign/complete/dashboard API methods are supported without new UI.
 No roles, admin pages or merges are included. Issues remain open.
 
 ## Verification
@@ -68,7 +80,8 @@ No roles, admin pages or merges are included. Issues remain open.
 - `npm.cmd run check`: no errors or warnings.
 - `npm.cmd run build`: passed locally (adapter-auto still needs a deployment target
   for production).
-- `node --test tests/auth.test.mjs`: seven scenarios plus the parent test pass,
+- `node --test tests/*.test.mjs`: twelve tests pass, including authentication and
+  bearer proxy scenarios,
   using simulated Auth0 responses; these do not prove live tenant configuration.
 - Live signup/login and company/job backend integration have not been verified.
 

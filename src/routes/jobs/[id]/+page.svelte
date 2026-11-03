@@ -21,7 +21,7 @@
 		try {
 			const jobId = page.params.id;
 
-			const response = await fetch(`http://localhost:8080/api/job/${jobId}`);
+			const response = await fetch(`/api/job/${jobId}`);
 
 			if (!response.ok) {
 				throw new Error(`HTTP-Fehler: ${response.status}`);

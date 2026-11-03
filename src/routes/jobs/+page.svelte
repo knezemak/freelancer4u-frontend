@@ -44,7 +44,7 @@
 			}
 
 			const query = params.toString();
-			const url = `http://localhost:8080/api/job${query ? `?${query}` : ''}`;
+			const url = `/api/job${query ? `?${query}` : ''}`;
 
 			const response = await fetch(url);
 
@@ -74,7 +74,7 @@
 		createSuccess = '';
 
 		try {
-			const response = await fetch('http://localhost:8080/api/job', {
+			const response = await fetch('/api/job', {
 				method: 'POST',
 				headers: {
 					'Content-Type': 'application/json'

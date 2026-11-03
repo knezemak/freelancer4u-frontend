@@ -1,4 +1,4 @@
-import { AUTH0_DOMAIN, AUTH0_CLIENT_ID } from '$app/env/private';
+import { AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } from '$app/env/private';
 
 const COOKIE = 'auth0_access_token';
 
@@ -56,6 +56,12 @@ export async function getUser(token) {
 /** @param {string} email @param {string} password @param {import('@sveltejs/kit').Cookies} cookies @param {boolean} secure */
 export async function login(email, password, cookies, secure) {
 	const { clientId } = configuration();
+	if (!AUTH0_AUDIENCE) {
+		throw new AuthError(
+			'Set AUTH0_AUDIENCE in .env to the Identifier of your Freelancer4U API in Auth0.',
+			503
+		);
+	}
 	const result = await authRequest('/oauth/token', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },
@@ -64,6 +70,7 @@ export async function login(email, password, cookies, secure) {
 			client_id: clientId,
 			username: email,
 			password,
+			audience: AUTH0_AUDIENCE,
 			scope: 'openid profile email'
 		})
 	});
@@ -90,6 +97,13 @@ export async function login(email, password, cookies, secure) {
  */
 export async function signup(email, password, cookies, secure, firstName = '', lastName = '') {
 	const { clientId } = configuration();
+	// Check before creating an account, so missing API setup cannot cause a partial signup.
+	if (!AUTH0_AUDIENCE) {
+		throw new AuthError(
+			'Set AUTH0_AUDIENCE in .env to the Identifier of your Freelancer4U API in Auth0.',
+			503
+		);
+	}
 	await authRequest('/dbconnections/signup', {
 		method: 'POST',
 		headers: { 'Content-Type': 'application/json' },

@@ -6,8 +6,8 @@ import { test } from 'node:test';
 const source = (
 	await readFile(new URL('../src/lib/server/auth.service.js', import.meta.url), 'utf8')
 ).replace(
-	"import { AUTH0_DOMAIN, AUTH0_CLIENT_ID } from '$app/env/private';",
-	"const AUTH0_DOMAIN = 'tenant.invalid', AUTH0_CLIENT_ID = 'test-only';"
+	"import { AUTH0_DOMAIN, AUTH0_CLIENT_ID, AUTH0_AUDIENCE } from '$app/env/private';",
+	"const AUTH0_DOMAIN = 'tenant.invalid', AUTH0_CLIENT_ID = 'test-only', AUTH0_AUDIENCE = 'test-api';"
 );
 const auth = await import(`data:text/javascript;base64,${Buffer.from(source).toString('base64')}`);
 function jar(token) {
@@ -62,6 +62,7 @@ test('Auth0 lifecycle and failure boundaries', async (t) => {
 		await auth.signup('test@example.invalid', 'test-password', cookies, true, 'Ada', 'Lovelace');
 		assert.equal(JSON.parse(calls[0].options.body).given_name, 'Ada');
 		assert.equal(JSON.parse(calls[0].options.body).family_name, 'Lovelace');
+		assert.equal(JSON.parse(calls[1].options.body).audience, 'test-api');
 		assert.deepEqual(
 			calls.map((c) => new URL(c.url).pathname),
 			['/dbconnections/signup', '/oauth/token', '/userinfo']
