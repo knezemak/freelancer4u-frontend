@@ -73,14 +73,20 @@ sent as page data or exposed to JavaScript. The proxy only allows the existing A
 resources/methods, preserves Java response status, rejects cross-origin writes,
 filters cookies and rejects upstream redirects. `API_BASE_URL` is server-only.
 The assign/complete/dashboard API methods are supported without new UI.
-No roles, admin pages or merges are included. Issues remain open.
+Exercise 4 adds `/account` with Account Details (picture, name, nickname, first and
+last name, email). The Account navigation item is only shown after login. Anonymous
+visitors see "Not logged in"; optional missing profile fields display a dash. The
+server exposes only these display fields, with HTTPS-only profile pictures. It
+does not expose the raw provider response or tokens. No additional Auth0 setting
+is required; an account created without first/last name may not have those fields.
+No role-based restrictions or merges are included. Issues remain open.
 
 ## Verification
 
 - `npm.cmd run check`: no errors or warnings.
 - `npm.cmd run build`: passed locally (adapter-auto still needs a deployment target
   for production).
-- `node --test tests/*.test.mjs`: twelve tests pass, including authentication and
+- `node --test tests/*.test.mjs`: fourteen tests pass, including account profile filtering, authentication and
   bearer proxy scenarios,
   using simulated Auth0 responses; these do not prove live tenant configuration.
 - Live signup/login and company/job backend integration have not been verified.

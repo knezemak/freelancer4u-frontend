@@ -46,6 +46,44 @@ test('Auth0 lifecycle and failure boundaries', async (t) => {
 		};
 		assert.deepEqual(await auth.readSession(jar()), { user: null, jwt_token: null });
 	});
+	await t.test('account profile exposes only display fields and an HTTPS picture', async () => {
+		globalThis.fetch = async () =>
+			Response.json({
+				sub: 'auth0|test',
+				name: 'Ada Lovelace',
+				nickname: 'ada',
+				given_name: 'Ada',
+				family_name: 'Lovelace',
+				email: 'ada@example.invalid',
+				picture: 'https://images.example/ada.png',
+				access_token: 'must-not-leak',
+				private_metadata: { secret: 'must-not-leak' }
+			});
+		const user = await auth.getUser('test-token');
+		assert.deepEqual(user, {
+			sub: 'auth0|test',
+			name: 'Ada Lovelace',
+			nickname: 'ada',
+			given_name: 'Ada',
+			family_name: 'Lovelace',
+			email: 'ada@example.invalid',
+			picture: 'https://images.example/ada.png'
+		});
+	});
+	await t.test('missing optional fields and unsafe profile image are harmless', async () => {
+		globalThis.fetch = async () =>
+			Response.json({
+				sub: 'auth0|test',
+				nickname: 'ada',
+				picture: 'javascript:alert(1)',
+				given_name: { invalid: true }
+			});
+		const user = await auth.getUser('test-token');
+		assert.equal(user.name, 'ada');
+		assert.equal(user.picture, undefined);
+		assert.equal(user.given_name, undefined);
+		assert.equal(user.email, undefined);
+	});
 	await t.test('signup logs in automatically and sets a protected expiring cookie', async () => {
 		const calls = [];
 		globalThis.fetch = async (url, options) => {

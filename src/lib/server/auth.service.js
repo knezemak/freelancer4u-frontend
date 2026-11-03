@@ -50,7 +50,36 @@ async function authRequest(path, options) {
 export async function getUser(token) {
 	const user = await authRequest('/userinfo', { headers: { Authorization: `Bearer ${token}` } });
 	if (typeof user.sub !== 'string') throw new AuthError('Invalid user profile.');
-	return { sub: user.sub, name: user.name || user.nickname || user.email || user.sub };
+	// Only expose fields needed by the account page, never the raw provider response.
+	return {
+		sub: user.sub,
+		name:
+			profileString(user.name) ||
+			profileString(user.nickname) ||
+			profileString(user.email) ||
+			user.sub,
+		nickname: profileString(user.nickname),
+		given_name: profileString(user.given_name),
+		family_name: profileString(user.family_name),
+		email: profileString(user.email),
+		picture: profilePicture(user.picture)
+	};
+}
+
+/** @param {unknown} value */
+function profileString(value) {
+	return typeof value === 'string' && value.length > 0 ? value : undefined;
+}
+
+/** @param {unknown} value */
+function profilePicture(value) {
+	if (typeof value !== 'string') return undefined;
+	try {
+		const url = new URL(value);
+		return url.protocol === 'https:' && !url.username && !url.password ? url.href : undefined;
+	} catch {
+		return undefined;
+	}
 }
 
 /** @param {string} email @param {string} password @param {import('@sveltejs/kit').Cookies} cookies @param {boolean} secure */
