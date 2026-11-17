@@ -1,0 +1,23 @@
+name: Frontend checks
+on:
+  push:
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  check:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: '24'
+          cache: npm
+      - run: npm ci --no-audit --no-fund
+      - run: npm run check
+      - run: node --test tests/*.test.mjs
+      - run: npx eslint src/lib/pagination.js src/lib/server/exercise9.js src/lib/Pagination.svelte src/routes/jobs/+page.svelte src/routes/companies/+page.svelte
+      - run: npm run build
