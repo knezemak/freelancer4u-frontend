@@ -1,375 +1,247 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-	import { SvelteURLSearchParams } from 'svelte/reactivity';
+	import { enhance } from '$app/forms';
 	import { resolve } from '$app/paths';
+	import Pagination from '#lib/Pagination.svelte';
+	import { jobAction, pageHref } from '#lib/pagination.js';
 	import type { PageProps } from './$types';
-	let { data }: PageProps = $props();
+	let { data, form }: PageProps = $props();
 	let isAdmin = $derived(data.user?.user_roles.includes('admin') ?? false);
-
-	type Job = {
-		id?: string;
-		title: string;
-		description: string;
-		jobType: string;
-		jobState: string;
-		earnings: number;
-		companyId: string;
-	};
-
-	let jobs: Job[] = $state([]);
-	let loading = $state(true);
-	let error = $state('');
-
-	let minEarnings = $state('');
-	let selectedType = $state('');
-
-	let newTitle = $state('');
-	let newDescription = $state('');
-	let newJobType = $state('IMPLEMENT');
-	let newEarnings = $state(100);
-	let newCompanyId = $state('');
-
-	let creating = $state(false);
-	let createError = $state('');
-	let createSuccess = $state('');
-
-	async function loadJobs() {
-		loading = true;
-		error = '';
-
-		try {
-			const params = new SvelteURLSearchParams();
-
-			if (minEarnings !== '') {
-				params.set('min', minEarnings);
-			}
-
-			if (selectedType !== '') {
-				params.set('type', selectedType);
-			}
-
-			const query = params.toString();
-			const url = `/api/job${query ? `?${query}` : ''}`;
-
-			const response = await fetch(url);
-
-			if (!response.ok) {
-				throw new Error(`HTTP-Fehler: ${response.status}`);
-			}
-
-			jobs = await response.json();
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Unbekannter Fehler';
-		} finally {
-			loading = false;
-		}
-	}
-
-	function resetFilters() {
-		minEarnings = '';
-		selectedType = '';
-		loadJobs();
-	}
-
-	async function createJob(event: SubmitEvent) {
-		event.preventDefault();
-
-		creating = true;
-		createError = '';
-		createSuccess = '';
-
-		try {
-			const response = await fetch('/api/job', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					title: newTitle,
-					description: newDescription,
-					jobType: newJobType,
-					earnings: Number(newEarnings),
-					companyId: newCompanyId
-				})
-			});
-
-			if (!response.ok) {
-				throw new Error(`HTTP-Fehler: ${response.status}`);
-			}
-
-			createSuccess = 'Job wurde erfolgreich erstellt!';
-
-			newTitle = '';
-			newDescription = '';
-			newJobType = 'IMPLEMENT';
-			newEarnings = 100;
-			newCompanyId = '';
-
-			resetFilters();
-		} catch (err) {
-			createError = err instanceof Error ? err.message : 'Job konnte nicht erstellt werden.';
-		} finally {
-			creating = false;
-		}
-	}
-
-	onMount(() => {
-		loadJobs();
-	});
+	let filters = $derived({ min: data.min, type: data.type });
 </script>
 
-<svelte:head>
-	<title>Freelancer4U – Jobs</title>
-	<meta name="description" content="Freelancer-Jobs suchen, filtern und erstellen" />
-</svelte:head>
-
+<svelte:head><title>Freelancer4U – Jobs</title></svelte:head>
 <main>
-	<nav aria-label="Hauptnavigation">
-		<a href={resolve('/jobs')} aria-current="page">Jobs</a>
-		{#if isAdmin}<a href={resolve('/companies')}>Companies anzeigen →</a>{/if}
-	</nav>
-
-	<h1>Freelancer4U</h1>
-	<p>Entdecke unsere Freelancer-Jobs.</p>
-
+	<h1>Jobs</h1>
+	{#if form?.message}<p role="status">{form.message}</p>{/if}
 	{#if isAdmin}
-		<h2>Neuen Job erstellen</h2>
-		{#if data.companiesError}<p class="error" role="alert">{data.companiesError}</p>{/if}
-
-		<form class="create-form" onsubmit={createJob}>
-			<label>
-				Titel
-				<input type="text" bind:value={newTitle} placeholder="z. B. Website testen" required />
-			</label>
-
-			<label>
-				Beschreibung
-				<textarea bind:value={newDescription} placeholder="Beschreibe den Job" rows="3" required
-				></textarea>
-			</label>
-
-			<label>
-				Job-Typ
-				<select bind:value={newJobType}>
-					<option value="TEST">TEST</option>
-					<option value="IMPLEMENT">IMPLEMENT</option>
-					<option value="REVIEW">REVIEW</option>
-					<option value="OTHER">OTHER</option>
-				</select>
-			</label>
-
-			<label>
-				Verdienst (CHF)
-				<input type="number" min="0" bind:value={newEarnings} required />
-			</label>
-
-			<label>
-				Company
-				<select bind:value={newCompanyId} required>
-					<option value="" disabled>Company auswählen</option>
-					{#each data.companies as company (company.id)}
-						<option value={company.id}>{company.name}</option>
-					{/each}
-				</select>
-			</label>
-
-			<button type="submit" disabled={creating}>
-				{creating ? 'Job wird erstellt...' : 'Job erstellen'}
-			</button>
-
-			{#if createError}
-				<p class="error">Fehler beim Erstellen: {createError}</p>
+		<details>
+			<summary>Neuen Job erstellen</summary>
+			<form method="POST" action="?/createJob" use:enhance class="create-form">
+				<label>Titel<input name="title" required /></label>
+				<label>Beschreibung<textarea name="description" required></textarea></label>
+				<label
+					>Job-Typ<select name="jobType"
+						><option>IMPLEMENT</option><option>TEST</option><option>REVIEW</option><option
+							>OTHER</option
+						></select
+					></label
+				>
+				<label
+					>Verdienst (CHF)<input
+						name="earnings"
+						type="number"
+						min="0"
+						step="0.01"
+						value="100"
+						required
+					/></label
+				>
+				<label
+					>Company<select name="companyId" required
+						><option value="">Company auswählen</option
+						>{#each data.companies as company (company.id)}<option value={company.id}
+								>{company.name}</option
+							>{/each}</select
+					></label
+				>
+				<button type="submit" disabled={data.companies.length === 0}>Job erstellen</button>
+			</form>
+			{#if data.companyNrOfPages > 1}
+				<p>
+					Company-Auswahl: Seite {data.companyPage} von {data.companyNrOfPages}. Beim Wechsel werden
+					ungespeicherte Eingaben verworfen.
+				</p>
+				<div class="picker">
+					{#if data.companyPage > 1}<a
+							href={resolve(
+								`/jobs?${pageHref('', data.currentPage, data.pageSize, {
+									...filters,
+									companyPageNumber: String(data.companyPage - 1)
+								}).slice(1)}`
+							)}>← Vorherige Companies</a
+						>{/if}
+					{#if data.companyPage < data.companyNrOfPages}<a
+							href={resolve(
+								`/jobs?${pageHref('', data.currentPage, data.pageSize, {
+									...filters,
+									companyPageNumber: String(data.companyPage + 1)
+								}).slice(1)}`
+							)}>Weitere Companies →</a
+						>{/if}
+				</div>
 			{/if}
-
-			{#if createSuccess}
-				<p class="success">{createSuccess}</p>
-			{/if}
-		</form>
+		</details>
 	{/if}
 
 	<h2>Jobs filtern</h2>
-
-	<div class="filters">
-		<label>
-			Mindestverdienst (CHF)
-			<input type="number" min="0" bind:value={minEarnings} placeholder="z. B. 150" />
-		</label>
-
-		<label>
-			Job-Typ
-			<select bind:value={selectedType}>
-				<option value="">Alle Typen</option>
-				<option value="TEST">TEST</option>
-				<option value="IMPLEMENT">IMPLEMENT</option>
-				<option value="REVIEW">REVIEW</option>
-				<option value="OTHER">OTHER</option>
-			</select>
-		</label>
-
-		<div class="buttons">
-			<button type="button" onclick={loadJobs}>Filtern</button>
-			<button type="button" class="reset" onclick={resetFilters}> Zurücksetzen </button>
-		</div>
-	</div>
+	<form method="GET" action={resolve('/jobs')} class="filters">
+		<input type="hidden" name="pageNumber" value="1" />
+		<label
+			>Mindestverdienst (exklusiv)<input
+				name="min"
+				type="number"
+				step="0.01"
+				value={data.min}
+			/></label
+		>
+		<label
+			>Job-Typ<select name="type" value={data.type}
+				><option value="">Alle Typen</option><option>IMPLEMENT</option><option>TEST</option><option
+					>REVIEW</option
+				><option>OTHER</option></select
+			></label
+		>
+		<label
+			>Pro Seite<select name="pageSize" value={data.pageSize}
+				>{#each [...new Set( [4, 20, 50, data.pageSize] )].sort((a, b) => a - b) as size (size)}<option
+						value={size}>{size}</option
+					>{/each}</select
+			></label
+		>
+		<button type="submit">Filtern</button><a href={resolve('/jobs')}>Zurücksetzen</a>
+	</form>
 
 	<h2>Alle Jobs</h2>
-
-	{#if loading}
-		<p>Jobs werden geladen...</p>
-	{:else if error}
-		<p class="error">Fehler beim Laden: {error}</p>
-	{:else if jobs.length === 0}
-		<p>Keine passenden Jobs gefunden.</p>
-	{:else}
-		<div class="job-list">
-			{#each jobs as job (job.id)}
-				<article class="job-card">
-					<h3>{job.title}</h3>
-					<p>{job.description}</p>
-					<p><strong>Typ:</strong> {job.jobType}</p>
-					<p><strong>Status:</strong> {job.jobState}</p>
-					<p><strong>Verdienst:</strong> CHF {job.earnings}</p>
-
-					{#if job.id}
-						<a class="details-link" href={resolve('/jobs/[id]', { id: job.id })}>
-							Details anzeigen →
-						</a>
-					{/if}
-				</article>
-			{/each}
-		</div>
-	{/if}
+	<p>
+		{data.totalElements} Jobs · Seite {data.currentPage}{#if data.nrOfPages > 0}
+			von {data.nrOfPages}{/if}
+	</p>
+	{#if data.jobs.length === 0}<p>Keine Jobs auf dieser Seite.</p>{/if}
+	<div class="table-scroll">
+		<table>
+			<thead
+				><tr
+					><th>Titel</th><th>Beschreibung</th><th>Typ</th><th>Verdienst (CHF)</th><th>Status</th><th
+						>Company-ID</th
+					><th>Freelancer-ID</th><th>Actions</th></tr
+				></thead
+			>
+			<tbody
+				>{#each data.jobs as job (job.id)}
+					{@const action = jobAction(job, data.user?.email)}
+					<tr
+						><td><a href={resolve('/jobs/[id]', { id: job.id })}>{job.title}</a></td><td
+							>{job.description}</td
+						><td>{job.jobType}</td><td>{Number(job.earnings).toFixed(2)}</td><td>{job.jobState}</td
+						><td>{job.companyId}</td><td>{job.freelancerId || '—'}</td>
+						<td>
+							{#if action === 'assign'}
+								<form method="POST" action="?/assignToMe" use:enhance>
+									<input type="hidden" name="jobId" value={job.id} /><button>Assign to me</button>
+								</form>
+							{:else if action === 'complete'}
+								<span class="badge">Assigned</span>
+								<form method="POST" action="?/completeMyJob" use:enhance>
+									<input type="hidden" name="jobId" value={job.id} /><button>Complete Job</button>
+								</form>
+							{:else if action === 'assigned'}<span class="badge">Assigned</span>
+							{:else if action === 'done'}<span class="badge done">Done</span>{/if}
+						</td></tr
+					>
+				{/each}</tbody
+			>
+		</table>
+	</div>
+	<Pagination
+		pathname="/jobs"
+		currentPage={data.currentPage}
+		pageSize={data.pageSize}
+		nrOfPages={data.nrOfPages}
+		{filters}
+	/>
 </main>
 
 <style>
 	main {
-		max-width: 900px;
-		margin: 60px auto;
-		padding: 20px;
-		font-family: Arial, sans-serif;
+		max-width: 1200px;
+		margin: 2rem auto;
+		padding: 0 1rem;
 	}
-
-	nav {
-		display: flex;
-		gap: 24px;
-		margin-bottom: 24px;
-	}
-
-	nav a {
-		color: #2563eb;
-		text-decoration: none;
-		font-weight: bold;
-	}
-
-	nav a:hover {
-		text-decoration: underline;
-	}
-
-	nav a[aria-current='page'] {
-		color: #374151;
-	}
-
-	h1 {
-		color: #2563eb;
-	}
-
+	h1,
 	h2 {
-		margin-top: 32px;
+		color: #2458ce;
 	}
-
-	.create-form {
-		display: flex;
-		flex-direction: column;
-		gap: 16px;
-		padding: 20px;
-		background: #eff6ff;
-		border-radius: 10px;
-	}
-
+	details,
 	.filters {
-		display: flex;
-		flex-wrap: wrap;
-		gap: 16px;
-		align-items: flex-end;
-		padding: 20px;
-		background: #f3f4f6;
-		border-radius: 10px;
+		background: #f1f5fc;
+		padding: 1rem;
+		border-radius: 0.5rem;
+		margin-bottom: 1.5rem;
 	}
-
+	summary {
+		font-weight: bold;
+		cursor: pointer;
+	}
+	.create-form {
+		display: grid;
+		gap: 0.7rem;
+		margin-top: 1rem;
+		max-width: 650px;
+	}
 	label {
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
-		font-weight: bold;
+		gap: 0.3rem;
 	}
-
 	input,
 	select,
 	textarea {
-		padding: 10px;
-		border: 1px solid #ccc;
-		border-radius: 6px;
-		font-size: 16px;
-		font-family: inherit;
+		padding: 0.5rem;
+		border: 1px solid #aab7cc;
+		border-radius: 0.25rem;
+		font: inherit;
 	}
-
-	.buttons {
-		display: flex;
-		gap: 10px;
-	}
-
 	button {
-		padding: 11px 18px;
-		background: #2563eb;
+		background: #2458ce;
 		color: white;
-		border: none;
-		border-radius: 6px;
+		border: 0;
+		border-radius: 0.25rem;
+		padding: 0.6rem 0.8rem;
 		cursor: pointer;
 	}
-
-	button.reset {
-		background: #6b7280;
-	}
-
 	button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
+		opacity: 0.5;
 	}
-
-	.job-list {
-		display: grid;
-		gap: 20px;
+	.filters,
+	.picker {
+		display: flex;
+		gap: 1rem;
+		align-items: end;
+		flex-wrap: wrap;
 	}
-
-	.job-card {
-		padding: 20px;
-		border: 1px solid #ddd;
-		border-radius: 10px;
+	.table-scroll {
+		overflow-x: auto;
 	}
-
-	.job-card h3 {
-		margin-top: 0;
-		color: #2563eb;
+	table {
+		border-collapse: collapse;
+		width: 100%;
 	}
-
-	.details-link {
+	th,
+	td {
+		text-align: left;
+		padding: 0.7rem;
+		border-bottom: 1px solid #d8dfed;
+		vertical-align: top;
+	}
+	th {
+		background: #f1f5fc;
+	}
+	.badge {
 		display: inline-block;
-		margin-top: 12px;
-		color: #2563eb;
-		font-weight: bold;
-		text-decoration: none;
+		background: #687386;
+		color: white;
+		border-radius: 0.3rem;
+		padding: 0.3rem 0.5rem;
+		margin-bottom: 0.3rem;
 	}
-
-	.details-link:hover {
-		text-decoration: underline;
+	.done {
+		background: #27754a;
 	}
-
-	.error {
-		color: #dc2626;
+	td form {
+		margin: 0;
 	}
-
-	.success {
-		color: #15803d;
-		font-weight: bold;
+	p[role='status'] {
+		padding: 1rem;
+		background: #eef3ff;
 	}
 </style>

@@ -5,7 +5,7 @@ export function allowedApiRequest(path, method) {
 	if (/^(company|job)$/.test(path)) return method === 'GET' || method === 'POST';
 	if (/^(company|job)\/[a-zA-Z0-9_-]+$/.test(path)) return method === 'GET';
 	if (path === 'service/jobdashboard') return method === 'GET';
-	if (/^service\/(assignjob|completejob)$/.test(path)) return method === 'PUT';
+	if (/^service\/(?:me\/)?(assignjob|completejob)$/.test(path)) return method === 'PUT';
 	return false;
 }
 

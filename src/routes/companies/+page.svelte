@@ -1,225 +1,111 @@
 <script lang="ts">
-	import { onMount } from 'svelte';
-
-	type Company = {
-		id?: string;
-		name?: string;
-		email?: string;
-	};
-
-	let companies: Company[] = $state([]);
-	let loading = $state(true);
-	let error = $state('');
-
-	let companyName = $state('');
-	let companyEmail = $state('');
-	let creating = $state(false);
-	let createError = $state('');
-	let successMessage = $state('');
-
-	async function loadCompanies() {
-		loading = true;
-		error = '';
-
-		try {
-			const response = await fetch('/api/company');
-
-			if (!response.ok) {
-				throw new Error(`HTTP-Fehler: ${response.status}`);
-			}
-
-			companies = await response.json();
-		} catch (err) {
-			error = err instanceof Error ? err.message : 'Unbekannter Fehler';
-		} finally {
-			loading = false;
-		}
-	}
-
-	async function createCompany(event: SubmitEvent) {
-		event.preventDefault();
-
-		creating = true;
-		createError = '';
-		successMessage = '';
-
-		try {
-			const response = await fetch('/api/company', {
-				method: 'POST',
-				headers: {
-					'Content-Type': 'application/json'
-				},
-				body: JSON.stringify({
-					name: companyName.trim(),
-					email: companyEmail.trim()
-				})
-			});
-
-			if (!response.ok) {
-				throw new Error(`HTTP-Fehler: ${response.status}`);
-			}
-
-			companyName = '';
-			companyEmail = '';
-
-			await loadCompanies();
-			successMessage = 'Company wurde erfolgreich erstellt!';
-		} catch (err) {
-			createError = err instanceof Error ? err.message : 'Unbekannter Fehler';
-		} finally {
-			creating = false;
-		}
-	}
-
-	onMount(() => {
-		loadCompanies();
-	});
+	import { enhance } from '$app/forms';
+	import { resolve } from '$app/paths';
+	import Pagination from '#lib/Pagination.svelte';
+	import type { PageProps } from './$types';
+	let { data, form }: PageProps = $props();
 </script>
 
-<svelte:head>
-	<title>Freelancer4U – Companies</title>
-</svelte:head>
-
+<svelte:head><title>Freelancer4U – Companies</title></svelte:head>
 <main>
-	<a href="/jobs">← Zurück zu den Jobs</a>
-
 	<h1>Unsere Companies</h1>
-
+	{#if form?.message}<p role="status">{form.message}</p>{/if}
 	<h2>Neue Company erstellen</h2>
-
-	<form onsubmit={createCompany}>
-		<label for="company-name">Name</label>
-		<input
-			id="company-name"
-			type="text"
-			bind:value={companyName}
-			placeholder="z. B. ZHAW Software Solutions"
-			required
-		/>
-
-		<label for="company-email">E-Mail</label>
-		<input
-			id="company-email"
-			type="email"
-			bind:value={companyEmail}
-			placeholder="z. B. info@example.com"
-			required
-		/>
-
-		<button type="submit" disabled={creating}>
-			{creating ? 'Wird erstellt...' : 'Company erstellen'}
-		</button>
+	<form method="POST" action="?/createCompany" use:enhance class="create-form">
+		<label>Name<input name="name" required /></label><label
+			>E-Mail<input name="email" type="email" required /></label
+		><button>Company erstellen</button>
 	</form>
-
-	{#if successMessage}
-		<p class="success">{successMessage}</p>
-	{/if}
-
-	{#if createError}
-		<p class="error">Fehler beim Erstellen: {createError}</p>
-	{/if}
-
 	<h2>Alle Companies</h2>
-
-	{#if loading}
-		<p>Companies werden geladen...</p>
-	{:else if error}
-		<p class="error">Fehler beim Laden: {error}</p>
-	{:else if companies.length === 0}
-		<p>Keine Companies vorhanden.</p>
-	{:else}
-		<div class="company-list">
-			{#each companies as company, index (company.id ?? index)}
-				<article class="company-card">
-					<h2>{company.name ?? 'Company ohne Namen'}</h2>
-					{#if company.email}
-						<p><strong>E-Mail:</strong> {company.email}</p>
-					{/if}
-					<p><strong>ID:</strong> {company.id}</p>
-				</article>
-			{/each}
-		</div>
-	{/if}
+	<form method="GET" action={resolve('/companies')}>
+		<input type="hidden" name="pageNumber" value="1" />
+		<label
+			>Pro Seite<select name="pageSize" value={data.pageSize}
+				>{#each [...new Set( [4, 20, 50, data.pageSize] )].sort((a, b) => a - b) as size (size)}<option
+						value={size}>{size}</option
+					>{/each}</select
+			></label
+		><button>Anzeigen</button>
+	</form>
+	<p>
+		{data.totalElements} Companies · Seite {data.currentPage}{#if data.nrOfPages > 0}
+			von {data.nrOfPages}{/if}
+	</p>
+	{#if data.companies.length === 0}<p>Keine Companies auf dieser Seite.</p>{/if}
+	<div class="table-scroll">
+		<table>
+			<thead><tr><th>Name</th><th>E-Mail</th><th>ID</th></tr></thead><tbody
+				>{#each data.companies as company (company.id)}<tr
+						><td>{company.name}</td><td>{company.email}</td><td>{company.id}</td></tr
+					>{/each}</tbody
+			>
+		</table>
+	</div>
+	<Pagination
+		pathname="/companies"
+		currentPage={data.currentPage}
+		pageSize={data.pageSize}
+		nrOfPages={data.nrOfPages}
+	/>
 </main>
 
 <style>
 	main {
-		max-width: 900px;
-		margin: 60px auto;
-		padding: 20px;
-		font-family: Arial, sans-serif;
+		max-width: 1000px;
+		margin: 2rem auto;
+		padding: 0 1rem;
 	}
-
-	h1 {
-		color: #2563eb;
-		margin-top: 30px;
-	}
-
-	a {
-		color: #2563eb;
-		text-decoration: none;
-	}
-
+	h1,
 	h2 {
-		margin-top: 32px;
+		color: #2458ce;
 	}
-
-	form {
+	.create-form {
+		background: #f1f5fc;
+		padding: 1rem;
+		display: grid;
+		gap: 0.7rem;
+		border-radius: 0.5rem;
+		margin-bottom: 1.5rem;
+		max-width: 600px;
+	}
+	label {
 		display: flex;
 		flex-direction: column;
-		gap: 12px;
-		padding: 20px;
-		background: #f3f4f6;
-		border-radius: 10px;
+		gap: 0.3rem;
 	}
-
-	label {
-		font-weight: bold;
+	input,
+	select {
+		padding: 0.5rem;
+		border: 1px solid #aab7cc;
+		border-radius: 0.25rem;
+		font: inherit;
 	}
-
-	input {
-		padding: 10px;
-		border: 1px solid #ccc;
-		border-radius: 6px;
-		font-size: 16px;
-	}
-
 	button {
-		align-self: flex-start;
-		padding: 11px 18px;
-		background: #2563eb;
+		background: #2458ce;
 		color: white;
-		border: none;
-		border-radius: 6px;
+		border: 0;
+		border-radius: 0.25rem;
+		padding: 0.6rem 0.8rem;
 		cursor: pointer;
 	}
-
-	button:disabled {
-		opacity: 0.6;
-		cursor: not-allowed;
+	table {
+		border-collapse: collapse;
+		width: 100%;
 	}
-
-	.company-list {
-		display: grid;
-		gap: 20px;
+	th,
+	td {
+		text-align: left;
+		padding: 0.7rem;
+		border-bottom: 1px solid #d8dfed;
 	}
-
-	.company-card {
-		padding: 20px;
-		border: 1px solid #ddd;
-		border-radius: 10px;
+	th {
+		background: #f1f5fc;
 	}
-
-	.company-card h2 {
-		margin-top: 0;
+	.table-scroll {
+		overflow-x: auto;
 	}
-
-	.error {
-		color: #dc2626;
-	}
-
-	.success {
-		color: #15803d;
-		font-weight: bold;
+	p[role='status'] {
+		padding: 1rem;
+		background: #eef3ff;
 	}
 </style>
