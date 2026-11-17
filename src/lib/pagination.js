@@ -23,7 +23,7 @@ export function pageHref(pathname, page, size, filters = {}) {
 		pageNumber: String(page),
 		pageSize: String(size)
 	});
-	for (const [key, value] of query) if (!value) query.delete(key);
+	for (const [key, value] of [...query]) if (!value) query.delete(key);
 	return `${pathname}?${query}`;
 }
 
